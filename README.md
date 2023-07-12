@@ -1,2 +1,2 @@
 # motion-autoconf
-Automatically install Motion and configure you IPcams with a simple cmdline interface.
+Automatically install Motion and configure you IPcams with a simple web interface.
