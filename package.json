@@ -1,0 +1,22 @@
+{
+  "name": "motion-live555-autoconf",
+  "version": "1.0.0",
+  "description": "Automatically install Motion and configure you IPcams with a simple web interface.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodingPeaks/motion-live555-autoconf.git"
+  },
+  "author": "CodingPeaks (Marco Nardone)",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/CodingPeaks/motion-live555-autoconf/issues"
+  },
+  "homepage": "https://github.com/CodingPeaks/motion-live555-autoconf#readme",
+  "dependencies": {
+    "child-process": "^1.0.2"
+  }
+}

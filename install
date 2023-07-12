@@ -1,0 +1,98 @@
+#!/bin/bash
+
+echo "This script will install Motion, Live555 and all the necessary packages to configure your environment."
+echo "Hit Ctrl + C to abort the installation process."
+echo "Proceeding in 10 seconds..."
+sleep 2
+set -o history -o histexpand
+
+checkexitcode () {
+   if [ $? != 0 ];
+   then
+	command=$(history -w /dev/stdout | tail -n 2 | head -n 1)
+	echo "[err] There was an error while running command: '$command', try running it manually. Exiting..."
+	exit $1
+   fi
+}
+
+echo "[apt] Installing motion..."
+apt install -y motion >/dev/null 
+checkexitcode
+mkdir -p /var/log/motion
+echo "[apt] Installing git..."
+apt install -y git >/dev/null 
+checkexitcode
+echo "[apt] Installing build tools..."
+apt install -y build-essential >/dev/null 
+checkexitcode
+echo "[apt] Installing libssl-dev..."
+apt install -y libssl-dev >/dev/null 
+checkexitcode
+
+cd /tmp
+
+if [ ! -d /tmp/live555 ];
+then
+
+echo "[git] Cloning Live555 from 'https://github.com/rgaufman/live555.git' to /tmp/"
+git config --global http.sslverify false
+git clone https://github.com/rgaufman/live555.git >/dev/null
+checkexitcode
+
+else
+
+echo "[git] Live555 directory found in /tmp, presuming it's our repo...[https://github.com/rgaufman/live555.git]"
+
+fi
+
+echo "[make] Generating Live555 linux makefiles..."
+cd live555 && ./genMakefiles linux >/dev/null 2>&1
+checkexitcode
+echo "[make] Generating binaries with make..."
+make -j4 >/dev/null 2>&1
+checkexitcode
+echo "[make] Live555 binaries generated, we only need live555ProxyServer, copying it to /usr/bin..."
+cd proxyServer
+cp live555ProxyServer /usr/bin/
+echo "[chmod] Making it executable..."
+chmod +x /usr/bin/live555ProxyServer
+
+echo "[mkdir] Creating motion ipcams directory..."
+mkdir -p /etc/motion/ipcams
+echo "camera_dir /etc/motion/ipcams" >> /etc/motion/motion.conf
+
+echo "[inst] Installation complete, beginning configuration steps."
+sleep 5
+
+IPCAM_COUNT=1
+
+while :
+do
+
+RTSP=$(whiptail --inputbox "\nEnter RTSP stream path for IPCAM-$IPCAM_COUNT" 10 59 rtsp:// --title "IPCAM Declarations" --ok-button Add 3>&1 1>&2 2>&3)
+
+exitstatus=$?
+
+if [ $exitstatus = 0 ]; then
+    echo "User selected Ok and entered " $COLOR
+
+   if (whiptail --title "IPCAM Declarations" --yesno "IPCAM-$IPCAM_COUNT added! Do you want to add another one?" 10 59); then
+      echo "User selected Yes, exit status was $?."
+   else
+      if (whiptail --title "Configuration complete" --yesno "Do you want to start Live555 and Motion?" 10 59); then
+         whiptail --title "Services started" --msgbox "Services have been started." 10 59
+      else
+         echo "Configuration completed."
+      fi
+      exit 0
+   fi
+
+else
+    echo "Configuration process aborted."
+    echo "Restart this script to configure stream sources or proceed manually."
+    exit 0
+fi
+
+((IPCAM_COUNT++))
+
+done
